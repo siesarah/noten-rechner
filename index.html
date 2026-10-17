@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6fb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Punkte-Rechner">
+  <title>Punkte-Rechner</title>
+  <style>
+    :root {
+      --primary: #3157d5;
+      --primary-light: #eaf0ff;
+      --background: #f4f6fb;
+      --surface: #fff;
+      --text: #182033;
+      --muted: #68738a;
+      --border: #e1e6f0;
+      --success: #147747;
+      --danger: #b42318;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 22px 14px 40px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text); background: var(--background);
+      -webkit-font-smoothing: antialiased;
+    }
+    .app { width: 100%; max-width: 480px; margin: 0 auto; }
+    header { text-align: center; margin: 8px 0 24px; }
+    .logo {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 56px; height: 56px; border-radius: 17px;
+      background: var(--primary); color: white; font-size: 28px; margin-bottom: 12px;
+    }
+    h1 { margin: 0; font-size: 28px; letter-spacing: -.8px; }
+    .subtitle { color: var(--muted); margin: 8px 0 0; font-size: 15px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 19px; padding: 19px; margin-bottom: 15px;
+      box-shadow: 0 5px 18px rgba(28,42,76,.04);
+    }
+    .step-label {
+      display: block; color: var(--primary); font-size: 12px; font-weight: 750;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+    }
+    h2 { font-size: 18px; margin: 0 0 15px; }
+    h3 { font-size: 15px; margin: 0 0 10px; }
+    .set-option {
+      display: flex; align-items: center; gap: 12px; width: 100%;
+      padding: 14px; margin-top: 9px; border: 2px solid var(--border);
+      border-radius: 13px; background: white; color: var(--text);
+      text-align: left; font: inherit; cursor: pointer;
+    }
+    .set-option.selected { border-color: var(--primary); background: var(--primary-light); }
+    .radio {
+      display: flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; flex: 0 0 22px;
+      border: 2px solid #aab3c5; border-radius: 50%; color: white; font-size: 13px;
+    }
+    .selected .radio { border-color: var(--primary); background: var(--primary); }
+    .set-name { display: block; font-weight: 700; font-size: 15px; overflow-wrap: anywhere; }
+    .set-description { display: block; color: var(--muted); font-size: 13px; margin-top: 4px; }
+    label { display: block; font-weight: 650; font-size: 14px; margin-bottom: 8px; }
+    input {
+      width: 100%; min-width: 0; padding: 13px 12px;
+      border: 1.5px solid var(--border); border-radius: 11px; outline: none;
+      background: white; color: var(--text); font: inherit; font-size: 16px;
+    }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(49,87,213,.10); }
+    .field { margin-bottom: 15px; }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 9px 0 0; }
+    .button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      width: 100%; padding: 13px 15px; border: 0; border-radius: 12px;
+      background: var(--primary); color: white; font: inherit; font-weight: 700;
+      cursor: pointer; margin-top: 9px;
+    }
+    .button.secondary { color: var(--primary); background: var(--primary-light); }
+    .button:disabled { opacity: .5; cursor: not-allowed; }
+    .small-button {
+      border: 1px solid var(--border); background: white; color: var(--text);
+      border-radius: 9px; padding: 8px 10px; font: inherit; font-size: 13px; cursor: pointer;
+    }
+    .saved-set {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .saved-set:last-child { border-bottom: 0; }
+    .saved-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+    .results-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 13px; }
+    .results-header h2 { margin: 0; }
+    .count-badge { background: var(--primary-light); color: var(--primary); padding: 6px 9px; border-radius: 20px; font-size: 12px; font-weight: 750; white-space: nowrap; }
+    .result-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+    .result-row:last-child { border-bottom: 0; }
+    .grade { font-weight: 700; font-size: 15px; }
+    .percentage { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .points { text-align: right; font-weight: 800; font-size: 19px; color: var(--success); overflow-wrap: anywhere; }
+    .points small { display: block; font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+    .empty { text-align: center; color: var(--muted); font-size: 14px; line-height: 1.6; padding: 10px 2px; }
+    .message { font-size: 14px; line-height: 1.5; padding: 11px 12px; border-radius: 10px; margin-top: 12px; background: var(--primary-light); color: var(--primary); overflow-wrap: anywhere; }
+    .message.error { background: #fff0ef; color: var(--danger); }
+    .percentage-row {
+      display: grid; grid-template-columns: minmax(0, 1fr) 100px 38px;
+      gap: 8px; align-items: center; margin-bottom: 9px;
+    }
+    .percentage-row input { padding: 11px 9px; }
+    .percentage-row .label-input { font-size: 14px; }
+    .percentage-row .percent-input { text-align: right; }
+    .remove-row { border: 0; background: #fff0ef; color: var(--danger); border-radius: 9px; min-height: 40px; font-size: 19px; cursor: pointer; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; line-height: 1.6; padding: 6px 10px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 360px) {
+      body { padding: 16px 10px 30px; }
+      .card { padding: 15px; }
+      h1 { font-size: 25px; }
+      .percentage-row { grid-template-columns: minmax(0,1fr) 78px 34px; gap: 5px; }
+      .percentage-row input { font-size: 14px; }
+      .saved-set { align-items: flex-start; flex-direction: column; }
+      .saved-actions { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <div class="logo" aria-hidden="true">✓</div>
+    <h1>Punkte-Rechner</h1>
+    <p class="subtitle">Mindestpunktzahlen einfach berechnen</p>
+  </header>
+
+  <section class="card">
+    <span class="step-label">Schritt 1</span>
+    <h2>Notenset auswählen</h2>
+    <div id="set-options"></div>
+    <button class="button secondary" id="new-set-button" type="button">＋ Eigenes Notenset erstellen</button>
+  </section>
+
+  <section class="card" id="editor-card" hidden>
+    <span class="step-label">Eigenes Notenset</span>
+    <h2 id="editor-heading">Notenset erstellen</h2>
+    <div class="field">
+      <label for="set-name-input">Name des Notensets</label>
+      <input id="set-name-input" maxlength="70" placeholder="z. B. Meine Klassenarbeit">
+    </div>
+
+    <h3>Noten und Prozentwerte</h3>
+    <p class="hint">Gib für jede Note eine Bezeichnung und einen Prozentwert zwischen 0 und 100 ein. Dezimalwerte sind erlaubt.</p>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 100px 38px;gap:8px;margin:14px 0 7px;">
+      <label>Note</label><label style="text-align:right;">Prozent</label><span></span>
+    </div>
+    <div id="percentage-rows"></div>
+    <button class="button secondary" id="add-row-button" type="button">＋ Note hinzufügen</button>
+    <button class="button" id="save-set-button" type="button">Notenset speichern</button>
+    <button class="button secondary" id="cancel-edit-button" type="button">Abbrechen</button>
+    <div id="editor-message" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card" id="saved-card" hidden>
+    <span class="step-label">Deine Notensets</span>
+    <h2>Eigene Sets verwalten</h2>
+    <div id="saved-sets"></div>
+    <p class="hint">Die festen Standardsets können nicht bearbeitet oder gelöscht werden.</p>
+  </section>
+
+  <section class="card">
+    <span class="step-label">Schritt 2</span>
+    <h2>Gesamtpunktzahl eingeben</h2>
+    <div class="field">
+      <label for="total-input">Wie viele Punkte sind maximal erreichbar?</label>
+      <input id="total-input" type="number" inputmode="decimal" min="0" step="any" placeholder="z. B. 60">
+    </div>
+    <p class="hint">Die Mindestpunktzahlen werden automatisch berechnet.</p>
+  </section>
+
+  <section class="card" id="results-card" hidden aria-live="polite">
+    <div class="results-header">
+      <h2>Mindestpunktzahlen</h2>
+      <span class="count-badge" id="count-badge"></span>
+    </div>
+    <div id="results"></div>
+    <p class="hint">Es wird nicht gerundet. Die Ergebnisse werden mit den berechneten Dezimalstellen angezeigt.</p>
+  </section>
+
+  <section class="card" id="empty-card">
+    <div class="empty">Wähle ein Notenset und gib die Gesamtpunktzahl ein, um die Ergebnisse zu sehen.</div>
+  </section>
+
+  <footer>Eigene Notensets werden in diesem Browser gespeichert und nicht automatisch auf andere Geräte übertragen.</footer>
+</main>
+
+<script>
+"use strict";
+
+// Feste Standardsets: Reihenfolge entspricht der angezeigten Note.
+const standardSets = [
+  {
+    id: "standard-klasse",
+    name: "Klasse 5 bis 10",
+    fixed: true,
+    grades: [
+      { label: "Note 1", percentage: 94 },
+      { label: "Note 2", percentage: 84 },
+      { label: "Note 3", percentage: 72 },
+      { label: "Note 4", percentage: 59 },
+      { label: "Note 5", percentage: 46 },
+      { label: "Note 6", percentage: 30 },
+      { label: "Note 7", percentage: 20 },
+      { label: "Note 8", percentage: 0 }
+    ]
+  },
+  {
+    id: "standard-oberstufe",
+    name: "Oberstufe",
+    fixed: true,
+    grades: [
+      { label: "15 Punkte", percentage: 95 },
+      { label: "14 Punkte", percentage: 90 },
+      { label: "13 Punkte", percentage: 85 },
+      { label: "12 Punkte", percentage: 80 },
+      { label: "11 Punkte", percentage: 75 },
+      { label: "10 Punkte", percentage: 70 },
+      { label: "9 Punkte", percentage: 65 },
+      { label: "8 Punkte", percentage: 60 },
+      { label: "7 Punkte", percentage: 55 },
+      { label: "6 Punkte", percentage: 50 },
+      { label: "5 Punkte", percentage: 45 },
+      { label: "4 Punkte", percentage: 39 },
+      { label: "3 Punkte", percentage: 33 },
+      { label: "2 Punkte", percentage: 27 },
+      { label: "1 Punkt", percentage: 20 }
+    ]
+  }
+];
+
+const STORAGE_KEY = "punkteRechnerEigeneNotensetsV2";
+let customSets = loadCustomSets();
+let selectedSetId = standardSets[0].id;
+let editingSetId = null;
+
+const $ = id => document.getElementById(id);
+
+function loadCustomSets() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    if (!Array.isArray(data)) return [];
+    return data.filter(set =>
+      set && typeof set.id === "string" &&
+      typeof set.name === "string" && Array.isArray(set.grades) &&
+      set.grades.length > 0 &&
+      set.grades.every(grade =>
+        grade && typeof grade.label === "string" &&
+        typeof grade.percentage === "number" &&
+        Number.isFinite(grade.percentage) &&
+        grade.percentage >= 0 && grade.percentage <= 100
+      )
+    ).map(set => ({ ...set, fixed: false }));
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomSetsToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(customSets));
+    return true;
+  } catch {
+    showEditorMessage("Speichern nicht möglich. Prüfe die Browsereinstellungen.", true);
+    return false;
+  }
+}
+
+function allSets() {
+  return [...standardSets, ...customSets];
+}
+
+function getSelectedSet() {
+  return allSets().find(set => set.id === selectedSetId) || standardSets[0];
+}
+
+// Keine Begrenzung auf zwei Nachkommastellen. JavaScript verwendet intern
+// Gleitkommazahlen; die Darstellung vermeidet zusätzliche Rundung auf 2 Stellen.
+function formatNumber(value) {
+  if (Object.is(value, -0)) value = 0;
+  return new Intl.NumberFormat("de-DE", {
+    useGrouping: false,
+    maximumFractionDigits: 20
+  }).format(value);
+}
+
+function renderSetOptions() {
+  const container = $("set-options");
+  container.replaceChildren();
+
+  allSets().forEach(set => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "set-option" + (set.id === selectedSetId ? " selected" : "");
+    button.setAttribute("aria-pressed", String(set.id === selectedSetId));
+
+    const radio = document.createElement("span");
+    radio.className = "radio";
+    radio.textContent = set.id === selectedSetId ? "✓" : "";
+
+    const info = document.createElement("span");
+    const name = document.createElement("span");
+    name.className = "set-name";
+    name.textContent = set.name;
+
+    const description = document.createElement("span");
+    description.className = "set-description";
+    description.textContent = set.grades.length + " Noten" + (set.fixed ? " · Standardset" : " · Eigenes Set");
+
+    info.append(name, description);
+    button.append(radio, info);
+    button.addEventListener("click", () => {
+      selectedSetId = set.id;
+      renderSetOptions();
+      renderSavedSets();
+      updateResults();
+    });
+    container.appendChild(button);
+  });
+}
+
+function renderSavedSets() {
+  const card = $("saved-card");
+  const container = $("saved-sets");
+  container.replaceChildren();
+
+  if (customSets.length === 0) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+
+  customSets.forEach(set => {
+    const row = document.createElement("div");
+    row.className = "saved-set";
+
+    const info = document.createElement("div");
+    const name = document.createElement("div");
+    name.className = "set-name";
+    name.textContent = set.name;
+    const description = document.createElement("div");
+    description.className = "set-description";
+    description.textContent = set.grades.length + " Noten";
+    info.append(name, description);
+
+    const actions = document.createElement("div");
+    actions.className = "saved-actions";
+
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "small-button";
+    editButton.textContent = "Bearbeiten";
+    editButton.addEventListener("click", () => openEditor(set.id));
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "small-button";
+    deleteButton.textContent = "Löschen";
+    deleteButton.addEventListener("click", () => deleteSet(set.id));
+
+    actions.append(editButton, deleteButton);
+    row.append(info, actions);
+    container.appendChild(row);
+  });
+}
+
+function createGradeRow(label = "", percentage = "") {
+  const row = document.createElement("div");
+  row.className = "percentage-row";
+
+  const labelInput = document.createElement("input");
+  labelInput.type = "text";
+  labelInput.className = "label-input";
+  labelInput.maxLength = 40;
+  labelInput.placeholder = "z. B. Note 1";
+  labelInput.setAttribute("aria-label", "Bezeichnung der Note");
+  labelInput.value = label;
+
+  const percentInput = document.createElement("input");
+  percentInput.type = "number";
+  percentInput.className = "percent-input";
+  percentInput.inputMode = "decimal";
+  percentInput.min = "0";
+  percentInput.max = "100";
+  percentInput.step = "any";
+  percentInput.placeholder = "0–100";
+  percentInput.setAttribute("aria-label", "Prozentwert");
+  percentInput.value = percentage;
+
+  const removeButton = document.createElement("button");
+  removeButton.type = "button";
+  removeButton.className = "remove-row";
+  removeButton.textContent = "×";
+  removeButton.setAttribute("aria-label", "Note entfernen");
+  removeButton.addEventListener("click", () => row.remove());
+
+  row.append(labelInput, percentInput, removeButton);
+  $("percentage-rows").appendChild(row);
+}
+
+function clearEditor() {
+  $("set-name-input").value = "";
+  $("percentage-rows").replaceChildren();
+  $("editor-message").textContent = "";
+  $("editor-message").className = "";
+}
+
+function openEditor(setId = null) {
+  editingSetId = setId;
+  clearEditor();
+
+  if (setId) {
+    const set = customSets.find(item => item.id === setId);
+    if (!set) return;
+
+    $("editor-heading").textContent = "Notenset bearbeiten";
+    $("set-name-input").value = set.name;
+    set.grades.forEach(grade => createGradeRow(grade.label, grade.percentage));
+  } else {
+    $("editor-heading").textContent = "Neues Notenset erstellen";
+    for (let i = 1; i <= 3; i++) createGradeRow("Note " + i, "");
+  }
+
+  $("editor-card").hidden = false;
+  $("editor-card").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function showEditorMessage(message, isError = false) {
+  const element = $("editor-message");
+  element.textContent = message;
+  element.className = "message" + (isError ? " error" : "");
+}
+
+function readEditorValues() {
+  const name = $("set-name-input").value.trim();
+  if (!name) {
+    showEditorMessage("Bitte gib deinem Notenset einen Namen.", true);
+    $("set-name-input").focus();
+    return null;
+  }
+
+  const rows = [...$("percentage-rows").querySelectorAll(".percentage-row")];
+  if (rows.length === 0) {
+    showEditorMessage("Bitte füge mindestens eine Note hinzu.", true);
+    return null;
+  }
+
+  const grades = [];
+  for (let index = 0; index < rows.length; index++) {
+    const labelInput = rows[index].querySelector(".label-input");
+    const percentInput = rows[index].querySelector(".percent-input");
+    const label = labelInput.value.trim() || ("Note " + (index + 1));
+    const raw = percentInput.value.trim();
+    const percentage = Number(raw);
+
+    if (raw === "" || !Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
+      showEditorMessage("Bitte gib für jede Note einen Prozentwert zwischen 0 und 100 ein.", true);
+      percentInput.focus();
+      return null;
+    }
+    grades.push({ label, percentage });
+  }
+
+  return { name, grades };
+}
+
+function saveEditedSet() {
+  const values = readEditorValues();
+  if (!values) return;
+
+  const duplicate = allSets().some(set =>
+    set.id !== editingSetId &&
+    set.name.toLocaleLowerCase("de-DE") === values.name.toLocaleLowerCase("de-DE")
+  );
+  if (duplicate) {
+    showEditorMessage("Dieser Name wird bereits verwendet. Bitte wähle einen anderen Namen.", true);
+    return;
+  }
+
+  let setId = editingSetId;
+  if (editingSetId) {
+    const index = customSets.findIndex(set => set.id === editingSetId);
+    if (index === -1) {
+      showEditorMessage("Dieses Notenset wurde nicht gefunden.", true);
+      return;
+    }
+    customSets[index] = {
+      id: editingSetId,
+      name: values.name,
+      grades: values.grades,
+      fixed: false
+    };
+  } else {
+    setId = "custom-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+    customSets.push({
+      id: setId,
+      name: values.name,
+      grades: values.grades,
+      fixed: false
+    });
+  }
+
+  if (!saveCustomSetsToStorage()) return;
+
+  selectedSetId = setId;
+  $("editor-card").hidden = true;
+  renderSetOptions();
+  renderSavedSets();
+  updateResults();
+}
+
+function deleteSet(setId) {
+  const set = customSets.find(item => item.id === setId);
+  if (!set) return;
+
+  if (!window.confirm('Möchtest du das Notenset "' + set.name + '" wirklich löschen?')) return;
+
+  const previous = customSets;
+  customSets = customSets.filter(item => item.id !== setId);
+  if (!saveCustomSetsToStorage()) {
+    customSets = previous;
+    return;
+  }
+
+  if (selectedSetId === setId) selectedSetId = standardSets[0].id;
+  if (editingSetId === setId) $("editor-card").hidden = true;
+
+  renderSetOptions();
+  renderSavedSets();
+  updateResults();
+}
+
+function updateResults() {
+  const raw = $("total-input").value.trim();
+  const total = Number(raw);
+  const resultsCard = $("results-card");
+  const emptyCard = $("empty-card");
+  const container = $("results");
+  container.replaceChildren();
+
+  if (raw === "" || !Number.isFinite(total) || total <= 0) {
+    resultsCard.hidden = true;
+    emptyCard.hidden = false;
+    return;
+  }
+
+  const set = getSelectedSet();
+  $("count-badge").textContent = set.grades.length + " Noten";
+
+  set.grades.forEach(grade => {
+    const points = total * grade.percentage / 100;
+    const row = document.createElement("div");
+    row.className = "result-row";
+
+    const gradeInfo = document.createElement("div");
+    const gradeName = document.createElement("div");
+    gradeName.className = "grade";
+    gradeName.textContent = grade.label;
+
+    const percent = document.createElement("div");
+    percent.className = "percentage";
+    percent.textContent = formatNumber(grade.percentage) + " %";
+
+    gradeInfo.append(gradeName, percent);
+
+    const pointsInfo = document.createElement("div");
+    pointsInfo.className = "points";
+    pointsInfo.appendChild(document.createTextNode(formatNumber(points)));
+
+    const unit = document.createElement("small");
+    unit.textContent = "Punkte";
+    pointsInfo.appendChild(unit);
+
+    row.append(gradeInfo, pointsInfo);
+    container.appendChild(row);
+  });
+
+  emptyCard.hidden = true;
+  resultsCard.hidden = false;
+}
+
+$("new-set-button").addEventListener("click", () => openEditor());
+$("add-row-button").addEventListener("click", () => {
+  const count = $("percentage-rows").children.length + 1;
+  createGradeRow("Note " + count, "");
+});
+$("save-set-button").addEventListener("click", saveEditedSet);
+$("cancel-edit-button").addEventListener("click", () => {
+  $("editor-card").hidden = true;
+});
+$("total-input").addEventListener("input", updateResults);
+
+renderSetOptions();
+renderSavedSets();
+updateResults();
+</script>
+</body>
+</html>
